@@ -160,9 +160,16 @@ class App(QWidget):
             assigned_free_days = 0
             j=0
             # for j in range(self.number_of_days):
-            while hours_for_person > 0:
-                three_of_the_same = (self.tableWidget.item(i+1,j-1)==self.tableWidget.item(i+1,j)==self.tableWidget.item(i+1,j+1))
+            while hours_for_person > 0 and assigned_free_days<number_of_free_days:
+                two_free = False
+                two_work = False
                 try:
+                    two_free = (self.tableWidget.item(i + 1, j - 1).text() == self.tableWidget.item(i + 1, j).text()=='x')
+                    two_work = (self.tableWidget.item(i + 1, j - 1).text() == self.tableWidget.item(i + 1, j).text()=='11.5')
+                except:
+                    pass
+                try:
+
                     if (self.tableWidget.item(i+1,j+1).text())=='x' and assigned_free_days-number_of_free_days!=0:
                         assigned_free_days+=1
                         j+=1
@@ -170,21 +177,24 @@ class App(QWidget):
                         j+=1
                 except:
                     is_ramdomly_free = random.random() < (number_of_free_days-assigned_free_days)/((self.number_of_days-j)+np.power(10.0,-100))
-                    if is_ramdomly_free and assigned_free_days-number_of_free_days!=0:
+                    if is_ramdomly_free and assigned_free_days-number_of_free_days!=0 and not two_free or two_work:
                         self.tableWidget.setItem(i+1,j+1,QTableWidgetItem(str('x')))
                         j+=1
                         assigned_free_days+=1
-                    elif self.is_enough_today(j+1) and assigned_free_days-number_of_free_days!=0:
+                    elif self.is_enough_today(j+1) and assigned_free_days-number_of_free_days!=0 and not two_free or two_work:
                         self.tableWidget.setItem(i + 1, j + 1, QTableWidgetItem(str('x')))
                         j+=1
                         assigned_free_days+=1
-                    else:
+                    elif not self.is_enough_today(j+1):
                         self.tableWidget.setItem(i+1,j+1,QTableWidgetItem(str(11.5)))
                         hours_for_person-=11.5
                         j+=1
-            
-            hours_for_person+=11.5
-            self.tableWidget.setItem(i+1,j+1,QTableWidgetItem(str(hours_for_person)))
+                    else:
+                        self.tableWidget.setItem(i + 1, j + 1, QTableWidgetItem(str('x')))
+                        j += 1
+                        assigned_free_days += 1
+            self.tableWidget.setItem(i+1,j,QTableWidgetItem(str(hours_for_person)))
+        self.isLast()
 
     def is_enough_today(self,day):
         number_of_todays_workers = 0
@@ -225,11 +235,13 @@ class App(QWidget):
         vertical_labels.append('')
         for i in range(rows):
             vertical_labels.append(str(i + 1))
+
         self.tableWidget.setVerticalHeaderLabels(vertical_labels)
         self.tableWidget.resizeRowsToContents()
 
     def count(self):
         suma = 0
+
         row = self.tableWidget.currentItem().row()
         #print(type(int(self.tableWidget.currentItem().text())))
         for i in range(self.number_of_days+1):
